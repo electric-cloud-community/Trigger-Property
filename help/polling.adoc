@@ -1,0 +1,17 @@
+=== Triggers Support
+
+
+The plugin allows configuring the {CD} to poll the specified source control repository for updates with a preconfigured schedule.
+If an update is detected, the pipeline or release object will run.
+
+The Polling schedule is managed by the `PropertyPollingTrigger` located in the *Electric Cloud* project.
+
+After the Trigger with a type 'Polling' is created, the schedule will check the specified {CD} property.
+
+For configuring use the documentation xref:pipelines:event-based-triggers.adoc[Event-based triggers#Polling Triggers].
+
+IMPORTANT: Schedule `PollingTriggers` should be enabled.
+
+. Go to menu:DevOps Essentials[Platform Home page].
+. Select *Electric Cloud* from the *Projects* tab.
+. Select the *Schedules* tab and enable the `PropertyPollingTrigger`.

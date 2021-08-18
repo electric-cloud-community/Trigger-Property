@@ -1,0 +1,4 @@
+chapters:
+  - name: Triggers Support
+    file: polling.adoc
+    place: after procedures

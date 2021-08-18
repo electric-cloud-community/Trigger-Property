@@ -1,0 +1,44 @@
+pluginInfo:
+  # This is default sample specification
+  # Feel free to change it
+  # Call pdk showdoc pluginspec to see the list of available fields and their description
+  pluginName: 'Trigger-Property'
+  version: '1.0.0'
+  description: 'Simple trigger plugin that reacts to a property change.'
+  author: 'Polina'
+  supportUrl: 'pshubina@cloudbees.com'
+  category: 'Utilities'
+  shell: 'ec-perl'
+  label: Property trigger
+  minCommanderVersion: 10.1
+
+
+properties:
+-
+  propertyName: ec_polling
+  description: Settings for the Trigger operations support.
+  properties:
+  - displayName: 'Property'
+  - procedureName: 'ec_TriggerForm'
+  expandable: false
+
+procedures:
+-
+  name: Polling
+  description: This procedure is used in a schedule to monitor changes in remote repositories.
+  hideFromStepPicker: true
+
+- name: ec_triggerForm
+  hideFromStepPicker: true
+  parameters:
+    - name: propName
+      required: true
+      label: Trigger property name
+      documentation: The trigger will fire when this property is changed.
+      type: entry
+    - name: fireOnTouch
+      label: Run trigger on date change
+      type: checkbox
+      documentation: If checked, the trigger will run even if the content of the property didn't change, but the modification date did.
+      checkedValue: 1
+      uncheckedValue: 0
