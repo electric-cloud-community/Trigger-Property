@@ -157,6 +157,7 @@ sub polling {
                 value => to_json($state),
             });
             logInfo "Saved trigger state";
+            # some cange
         }
         else {
             logInfo "Nothing changed";
