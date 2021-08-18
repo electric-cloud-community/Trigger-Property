@@ -71,6 +71,7 @@ sub polling {
 
 
     for my $trigger ($triggers->findnodes('//trigger')) {
+
         my $name = $trigger->findvalue('triggerName') . '';
         my $enabled = $trigger->findvalue('triggerEnabled'). '';
         my $projectName = $trigger->findvalue('projectName'). '';
@@ -87,50 +88,32 @@ sub polling {
             next;
         }
 
-        my $params = {};
-        for ($trigger->findnodes("pluginParameters/parameterDetail")) {
-            my $n = $_->findvalue('parameterName') . '';
-            my $v = $_->findvalue('parameterValue') . '';
-            $params->{$n} = $v;
-        }
-        logInfo "Processing trigger $projectName:$name";
-        logInfo Dumper($params);
+
+        eval {
+            my $params = {};
+            for ($trigger->findnodes("pluginParameters/parameterDetail")) {
+                my $n = $_->findvalue('parameterName') . '';
+                my $v = $_->findvalue('parameterValue') . '';
+                $params->{$n} = $v;
+            }
+            logInfo "Processing trigger $projectName:$name";
+            logInfo "=====================================";
+            logInfo Dumper($params);
 
 
-        my $propName = $params->{propName};
-        my $prop = eval {
-            $ec->getProperty({projectName => $projectName, propertyName => $propName});
-        };
-        if ($@) {
-            logWarning "Failed to get property $propName";
-            logWarning $@;
-            next;
-        }
+            my $propName = $params->{propName};
+            my $prop = eval {
+                $ec->getProperty({projectName => $projectName, propertyName => $propName});
+            };
+            if ($@) {
+                logWarning "Failed to get property $propName";
+                logWarning $@;
+                next;
+            }
 
-        my $value = $prop->findvalue("//value") . '';
-        my $lastModified = $prop->findvalue("//modifyTime") . '';
+            my $value = $prop->findvalue("//value") . '';
+            my $lastModified = $prop->findvalue("//modifyTime") . '';
 
-        my $state = eval {
-                from_json($ec->getPropertyValue({
-                    projectName => $projectName,
-                    triggerName => $name,
-                    propertyName => 'ec_trigger_state/triggerState'
-                }))
-        };
-
-        $state ||= {};
-
-        my $run = 0;
-        if ($state->{value} ne $value) {
-            logInfo "Value changed from $state->{value} to $value, running the trigger";
-            $run = 1;
-        }
-
-        if ($state->{lastModified} && $state->{lastModified} ne $lastModified && $params->{fireOnTouch}) {
-            logInfo "The property modification date has been changed, running the trigger";
-            $run = 1;
-        }
-        if ($run) {
 
             my @children = $trigger->getChildNodes;
             my %runtimes = ();
@@ -141,26 +124,55 @@ sub polling {
                 $runtimes{$n} = $v if $n && $v && grep { $n eq $_ } @allowed;
             }
 
+            my $state = eval {
+                    from_json($ec->getPropertyValue({
+                        projectName => $projectName,
+                        triggerName => $name,
+                        propertyName => 'ec_trigger_state/triggerState',
+                        %runtimes
+                    }))
+            };
 
-            $ec->runTrigger({
-                projectName => $projectName,
-                triggerName => $name,
-                %runtimes,
-            });
-            $state->{value} = $value;
-            $state->{lastModified} = $lastModified;
+            $state ||= {};
 
-            $ec->setProperty({
-                projectName => $projectName,
-                triggerName => $name,
-                propertyName => 'ec_trigger_state/triggerState',
-                value => to_json($state),
-            });
-            logInfo "Saved trigger state";
-            # some cange
-        }
-        else {
-            logInfo "Nothing changed";
+            my $run = 0;
+            if ($state->{value} ne $value) {
+                logInfo "Value changed from $state->{value} to $value, running the trigger";
+                $run = 1;
+            }
+
+            if ($state->{lastModified} && $state->{lastModified} ne $lastModified && $params->{fireOnTouch}) {
+                logInfo "The property modification date has been changed, running the trigger";
+                $run = 1;
+            }
+            if ($run) {
+
+
+
+                $ec->runTrigger({
+                    projectName => $projectName,
+                    triggerName => $name,
+                    %runtimes,
+                });
+                $state->{value} = $value;
+                $state->{lastModified} = $lastModified;
+
+                $ec->setProperty({
+                    projectName => $projectName,
+                    triggerName => $name,
+                    propertyName => 'ec_trigger_state/triggerState',
+                    %runtimes,
+                    value => to_json($state),
+                });
+                logInfo "Saved trigger state";
+            }
+            else {
+                logInfo "Nothing changed";
+            }
+        };
+        if ($@) {
+            logError "Failed to process trigger $projectName:$name: $@";
+            $sr->setJobStepOutcome('error');
         }
     }
 

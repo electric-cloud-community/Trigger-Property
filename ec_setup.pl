@@ -15,7 +15,7 @@ if ($promoteAction eq 'promote') {
 
         $batch->createSchedule($schedProject, $schedName, {
             description      => 'System schedule to check Git repository polling triggers.',
-            scheduleDisabled => isNewTriggersSupported() ? 'false' : 'true',
+            scheduleDisabled => 'false',
             procedureName    => '/plugins/@PLUGIN_KEY@/project/procedures/Polling',
             intervalUnits    => 'minutes',
             interval         => 5
@@ -114,24 +114,4 @@ sub getBooleanPropertySafe {
     };
 
     return $disabledByDemote;
-}
-
-sub isNewTriggersSupported{
-    if (defined $newApisSupported){
-        return $newApisSupported;
-    }
-
-    $newApisSupported = 0;
-
-    my $versions = $commander->getVersions();
-    if (my $version = $versions->findvalue('//version')) {
-        require ElectricCommander::Util;
-        ElectricCommander::Util->import('compareMinor');
-
-        if (compareMinor($version, '10.1') >= 0 && compareMinor($version, '2020.11') >= 0) {
-            $newApisSupported = 1;
-        }
-    }
-
-    return $newApisSupported;
 }
