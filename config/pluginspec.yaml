@@ -11,6 +11,9 @@ pluginInfo:
   shell: 'ec-perl'
   label: Property trigger
   minCommanderVersion: 10.1
+  repositoryUrl: https://github.com/electric-cloud-community/Trigger-Property
+  detailedDescription: 'Simple trigger plugin that reacts to a property change.'
+
 
 
 properties:
